@@ -1,7 +1,5 @@
-//skrypt generuje 100 przedmiotów z losowymi wagami (od 1 do 10) i wartościami (od 1 do 100),
+//skrypt generuje 200 przedmiotów z losowymi wagami (od 1 do 10) i wartościami (od 1 do 100),
 // a następnie zapisuje je w pliku data.json razem z przykładową pojemnością plecaka ustawioną na 500.
-//Z taką pojemnością i przedmiotami, algorytm genetyczny mógłby być użyty do znalezienia optymalnego zestawu przedmiotów
-// maksymalizującego wartość plecaka bez przekroczenia jego pojemności
 
 const fs = require("fs");
 
@@ -18,7 +16,7 @@ const generateItems = (numItems) => {
 };
 
 const data = {
-  capacity: 500, // Przykładowa pojemność plecaka
+  capacity: 500, // pojemność plecaka
   items: generateItems(200), // Generowanie przedmiotów
 };
 
