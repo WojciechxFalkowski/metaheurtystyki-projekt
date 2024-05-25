@@ -1,62 +1,35 @@
-const fs = require("fs");
+const fs = require('fs');
+const results = JSON.parse(fs.readFileSync('results.json', 'utf8'));
 
-// Funkcja do obliczania średniej wartości
-function calculateAverage(values) {
-  const sum = values.reduce((acc, value) => acc + value, 0);
-  return sum / values.length;
-}
+/**
+ * Funkcja analizuje wyniki zapisane w pliku results.json.
+ * Grupuje wyniki według konfiguracji, oblicza średnią wartość, wagę oraz odchylenie standardowe dla każdej konfiguracji.
+ */
+const summarizeResults = async () => {
+    const chalk = await import('chalk');
+    const summary = {};
 
-// Funkcja do obliczania wariancji
-function calculateVariance(values, average) {
-  const sumOfSquares = values.reduce(
-    (acc, value) => acc + Math.pow(value - average, 2),
-    0
-  );
-  return sumOfSquares / values.length;
-}
+    results.forEach(result => {
+        const key = `${result.mutationRate}-${result.crossoverRate}-${result.populationSize}`;
+        const resultName = `mutationRate: ${result.mutationRate}, crossoverRate: ${result.crossoverRate}, populationSize: ${result.populationSize}`;
+        if (!summary[key]) {
+            summary[key] = { values: [], weights: [], resultName: resultName };
+        }
+        summary[key].values.push(result.value);
+        summary[key].weights.push(result.weight);
+    });
 
-// Funkcja do obliczania wariancji
-function calculateVariance(values, average) {
-  const sumOfSquares = values.reduce(
-    (acc, value) => acc + Math.pow(value - average, 2),
-    0
-  );
-  return sumOfSquares / values.length;
-}
+    for (const [key, { values, weights, resultName }] of Object.entries(summary)) {
+        const meanValue = values.reduce((a, b) => a + b, 0) / values.length;
+        const meanWeight = weights.reduce((a, b) => a + b, 0) / weights.length;
+        const stdDevValue = Math.sqrt(values.map(x => Math.pow(x - meanValue, 2)).reduce((a, b) => a + b) / values.length);
+        const stdDevWeight = Math.sqrt(weights.map(x => Math.pow(x - meanWeight, 2)).reduce((a, b) => a + b) / weights.length);
 
-// Funkcja do obliczania odchylenia standardowego
-function calculateStandardDeviation(variance) {
-    return Math.sqrt(variance);
-}
-
-// Funkcja do wczytywania danych z pliku JSON
-function analyzeResults() {
-  fs.readFile("results.json", "utf8", (err, data) => {
-    if (err) {
-      console.error("Error reading file:", err);
-      return;
+        console.log(chalk.default.blue(`Konfiguracja: ${resultName}`));
+        console.log(`Średnia wartość: ${meanValue.toFixed(2)}, Odchylenie standardowe wartości: ${stdDevValue.toFixed(2)}`);
+        console.log(`Średnia waga: ${meanWeight.toFixed(2)}, Odchylenie standardowe wagi: ${stdDevWeight.toFixed(2)}`);
+        console.log('\n'); // Linia przerwy między wynikami różnych konfiguracji
     }
-    try {
-      const results = JSON.parse(data);
-      const values = results.map((individual) => individual.value);
+};
 
-      // Obliczenia statystyczne
-      const maxValue = Math.max(...values);
-      const minValue = Math.min(...values);
-      const averageValue = calculateAverage(values);
-      const variance = calculateVariance(values, averageValue);
-      const standardDeviation = calculateStandardDeviation(variance);
-
-      // Wyświetlanie wyników
-      console.log(`Najlepszy wynik: ${maxValue}`);
-      console.log(`Najgorszy wynik: ${minValue}`);
-      console.log(`Średni wynik: ${averageValue.toFixed(2)}`);
-      console.log(`Wariancja: ${variance.toFixed(2)}`);
-      console.log(`Odchylenie standardowe: ${standardDeviation.toFixed(2)}`);
-    } catch (parseErr) {
-      console.error("Error parsing JSON:", parseErr);
-    }
-  });
-}
-
-analyzeResults();
+summarizeResults();
